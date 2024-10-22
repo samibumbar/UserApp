@@ -1,0 +1,20 @@
+.messages-contaier {
+  background-color: black;
+  max-width: 60rem;
+  min-height: 20rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 1rem;
+}
+.messages-contaier ul {
+  list-style: none;
+}
+.unread {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+  margin-left: 10px;
+}

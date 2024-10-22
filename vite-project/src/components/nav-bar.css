@@ -1,0 +1,10 @@
+.nav-bar {
+  background-color: black;
+  padding: 0.5rem;
+  border-radius: 1rem;
+}
+.nav-bar ul {
+  display: flex;
+  list-style: none;
+  gap: 1rem;
+}

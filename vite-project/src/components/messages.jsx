@@ -1,0 +1,85 @@
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { auth, db } from "./firebase";
+
+function Messages() {
+  const { conversationId } = useParams();
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const currentUser = auth.currentUser;
+
+  useEffect(() => {
+    if (conversationId) {
+      const q = query(
+        collection(db, `conversations/${conversationId}/messages`),
+        orderBy("createdAt", "asc")
+      );
+
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const fetchedMessages = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMessages(fetchedMessages);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [conversationId]);
+
+  const sendMessage = async (e) => {
+    e.preventDefault();
+
+    if (newMessage.trim()) {
+      const messageData = {
+        text: newMessage,
+        senderId: currentUser.uid,
+        createdAt: serverTimestamp(),
+      };
+
+      try {
+        await addDoc(
+          collection(db, `conversations/${conversationId}/messages`),
+          messageData
+        );
+        setNewMessage("");
+      } catch (error) {
+        console.error("Error sending message: ", error);
+      }
+    }
+  };
+
+  return (
+    <div className="messages-container">
+      <ul>
+        {messages.map((message) => (
+          <li key={message.id}>
+            <strong>
+              {message.senderId === currentUser.uid ? "You" : "Friend"}:
+            </strong>{" "}
+            {message.text}
+          </li>
+        ))}
+      </ul>
+      <form onSubmit={sendMessage}>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a message"
+        />
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  );
+}
+
+export default Messages;
