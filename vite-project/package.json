@@ -3,12 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://username.github.com/UserApp/",
   "scripts": {
-    "homepage": "https://username.github.com/UserApp/",
     "dev": "vite",
     "build": "tsc && vite build --base=/UserApp",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages"
   },
   "dependencies": {
     "formik": "^2.4.6",
