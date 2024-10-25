@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  BrowserRouter as Router,
+  HashRouter as Router, // Înlocuiește BrowserRouter cu HashRouter
   Routes,
   Route,
   Navigate,
@@ -35,7 +35,6 @@ function App() {
         {user && <Navbar />}
         <Routes>
           <Route path="/" element={<AuthForm />} />
-
           <Route
             path="/profile"
             element={user ? <Profile /> : <Navigate to="/" />}
@@ -44,12 +43,10 @@ function App() {
             path="/messages/:conversationId"
             element={user ? <Messages /> : <Navigate to="/" />}
           />
-
           <Route
             path="/messages/conversation-list"
             element={user ? <ConversationList /> : <Navigate to="/" />}
           />
-
           <Route
             path="/messages"
             element={
@@ -60,7 +57,6 @@ function App() {
               )
             }
           />
-
           <Route
             path="/friends"
             element={user ? <FriendsList /> : <Navigate to="/" />}
