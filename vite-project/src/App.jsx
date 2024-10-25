@@ -31,7 +31,7 @@ function App() {
 
   return (
     <div className="container">
-      <Router>
+      <Router basename="/UserApp">
         {user && <Navbar />}
         <Routes>
           <Route path="/" element={<AuthForm />} />
