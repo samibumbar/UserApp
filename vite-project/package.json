@@ -6,7 +6,7 @@
   "homepage": "https://username.github.com/UserApp/",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build --base=/UserApp",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
