@@ -8,6 +8,7 @@ import {
   addDoc,
   serverTimestamp,
   doc,
+  setDoc,
   getDoc,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
@@ -100,7 +101,7 @@ function Messages() {
     const offer = await peerConnection.current.createOffer();
     await peerConnection.current.setLocalDescription(offer);
 
-    await addDoc(collection(db, "calls"), {
+    await setDoc(doc(db, "calls", `${conversationId}-offer`), {
       offer,
       senderId: currentUser.uid,
       conversationId,
@@ -117,21 +118,34 @@ function Messages() {
             data.conversationId === conversationId &&
             data.senderId !== currentUser.uid
           ) {
-            if (data.offer) {
-              await peerConnection.current.setRemoteDescription(
-                new RTCSessionDescription(data.offer)
-              );
-              const answer = await peerConnection.current.createAnswer();
-              await peerConnection.current.setLocalDescription(answer);
-              await addDoc(collection(db, "calls"), {
-                answer,
-                senderId: currentUser.uid,
-                conversationId,
-              });
-            } else if (data.answer) {
-              await peerConnection.current.setRemoteDescription(
-                new RTCSessionDescription(data.answer)
-              );
+            try {
+              if (change.doc.id === `${conversationId}-offer` && data.offer) {
+                if (peerConnection.current.signalingState === "stable") {
+                  await peerConnection.current.setRemoteDescription(
+                    new RTCSessionDescription(data.offer)
+                  );
+                  const answer = await peerConnection.current.createAnswer();
+                  await peerConnection.current.setLocalDescription(answer);
+                  await setDoc(doc(db, "calls", `${conversationId}-answer`), {
+                    answer,
+                    senderId: currentUser.uid,
+                    conversationId,
+                  });
+                }
+              } else if (
+                change.doc.id === `${conversationId}-answer` &&
+                data.answer
+              ) {
+                if (
+                  peerConnection.current.signalingState === "have-local-offer"
+                ) {
+                  await peerConnection.current.setRemoteDescription(
+                    new RTCSessionDescription(data.answer)
+                  );
+                }
+              }
+            } catch (error) {
+              console.error("RTC Error:", error);
             }
           }
         });
