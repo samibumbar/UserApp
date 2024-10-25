@@ -3,12 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://username.github.com/UserApp/",
+  "homepage": "https://sambumbar.github.io/UserApp/",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build --base=/UserApp",
+    "build": "vite build --base=/UserApp",
     "predeploy": "npm run build",
-    "deploy": "gh-pages"
+    "deploy": "gh-pages -d dist",
+    "preview": "vite preview"
   },
   "dependencies": {
     "formik": "^2.4.6",
