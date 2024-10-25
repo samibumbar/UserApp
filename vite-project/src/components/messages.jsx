@@ -21,7 +21,6 @@ function Messages() {
 
   useEffect(() => {
     const fetchFriendName = async () => {
-      // Obține detaliile conversației pentru a afla cine este prietenul
       const conversationDoc = await getDoc(
         doc(db, "conversations", conversationId)
       );
@@ -29,7 +28,6 @@ function Messages() {
         const participants = conversationDoc.data().participants;
         const friendId = participants.find((id) => id !== currentUser.uid); // Identifică prietenul
 
-        // Obține numele prietenului pe baza ID-ului
         const friendDoc = await getDoc(doc(db, "users", friendId));
         if (friendDoc.exists()) {
           setFriendName(friendDoc.data().name); // Setează numele prietenului
