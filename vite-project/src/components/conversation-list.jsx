@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "./messages.css";
 import {
   collection,
   query,
@@ -63,7 +64,7 @@ function ConversationList() {
   };
 
   return (
-    <div>
+    <div className="conv-container">
       <h2>Your Conversations</h2>
       <ul>
         {conversations.map((conversation) => {

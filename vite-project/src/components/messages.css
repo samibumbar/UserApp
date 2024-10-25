@@ -1,14 +1,32 @@
-.messages-contaier {
+.messages-container {
   background-color: black;
   max-width: 60rem;
-  min-height: 20rem;
+  margin-top: 1rem;
   display: flex;
+  justify-content: center;
+  align-items: center;
   flex-direction: column;
-  justify-content: space-between;
+  padding: 1rem 2rem;
   border-radius: 1rem;
 }
-.messages-contaier ul {
+.chating-with {
+  padding: 0.2rem 5rem;
+  background: linear-gradient(to right, #4b0082, #800080);
+  border-radius: 0.4rem;
+}
+.chating-with h2 {
+  font-size: 18px;
+  line-height: 0;
+}
+.ul {
+  overflow-y: auto;
+  max-height: 70vh;
+  padding: 0.2rem;
   list-style: none;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 .unread {
   display: inline-block;
@@ -17,4 +35,63 @@
   background-color: red;
   border-radius: 50%;
   margin-left: 10px;
+}
+.conv-container {
+  min-width: 20rem;
+
+  margin: 0;
+  padding: 0;
+}
+
+.conv-container li {
+  width: 100%;
+}
+
+.conv-container button {
+  margin-left: 0;
+  width: 100%;
+  margin-left: -2.5rem;
+}
+
+li {
+  display: flex;
+  padding: 0.1rem;
+  justify-content: space-between;
+  clear: both;
+  font-size: 0.8rem;
+}
+.message.you {
+  background-color: #daf7a6; /* culoare pentru mesajele tale */
+  align-self: flex-end;
+  text-align: right;
+  float: right;
+  color: #000;
+  margin-bottom: 0.2rem;
+  border-radius: 0.4rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.message.friend {
+  background-color: #f1f1f1;
+  align-self: flex-start;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  float: left;
+  margin-bottom: 0.2rem;
+  color: #333;
+  border-radius: 0.4rem;
+}
+.form {
+  display: flex;
+  flex-direction: row;
+}
+.send-message {
+  max-width: 3rem;
+  display: flex;
+  justify-content: center;
+}
+.fa-solid {
+  font-size: 1rem;
 }

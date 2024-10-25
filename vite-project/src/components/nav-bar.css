@@ -1,10 +1,24 @@
 .nav-bar {
-  background-color: black;
-  padding: 0.5rem;
-  border-radius: 1rem;
+  position: absolute;
+  bottom: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  left: 50%;
+  right: 50%;
 }
 .nav-bar ul {
+  padding: 0.5rem;
+  border-radius: 0.4rem;
+  margin: 0 auto;
+  min-width: 21rem;
+  background: rgba(255, 255, 255, 0.3);
+  padding: 0.5rem;
   display: flex;
   list-style: none;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+}
+.fa-solid {
+  font-size: 2rem;
 }

@@ -7,13 +7,19 @@ function Navbar() {
     <nav className="nav-bar">
       <ul>
         <li>
-          <Link to="/profile">Profile</Link>
+          <Link to="/profile">
+            <i className="fa-solid fa-user"></i>
+          </Link>
         </li>
         <li>
-          <Link to="/messages">Messages</Link>
+          <Link to="/messages">
+            <i className="fa-solid fa-message"></i>
+          </Link>
         </li>
         <li>
-          <Link to="/friends">Friends</Link>
+          <Link to="/friends">
+            <i className="fa-solid fa-user-group"></i>
+          </Link>
         </li>
       </ul>
     </nav>

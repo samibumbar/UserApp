@@ -3,7 +3,7 @@
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
   display: flex;
-  padding: 2rem;
+  padding: 2rem 5rem;
   flex-direction: column;
   border-radius: 1rem;
   align-items: center;

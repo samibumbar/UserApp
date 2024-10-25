@@ -81,24 +81,36 @@ function Messages() {
 
   return (
     <div className="messages-container">
-      <ul>
+      <div className="chating-with">
+        <h2 className="friend-name-header"> {friendName}</h2>
+      </div>
+      <ul className="ul">
         {messages.map((message) => (
-          <li key={message.id}>
+          <li
+            key={message.id}
+            className={
+              message.senderId === currentUser.uid
+                ? "message you"
+                : "message friend"
+            }
+          >
             <strong>
-              {message.senderId === currentUser.uid ? "You" : friendName}:
+              {message.senderId === currentUser.uid ? "You" : friendName}
             </strong>{" "}
             {message.text}
           </li>
         ))}
       </ul>
-      <form onSubmit={sendMessage}>
+      <form className="form" onSubmit={sendMessage}>
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a message"
         />
-        <button type="submit">Send</button>
+        <button className="send-message" type="submit">
+          <i className="fa-solid fa-paper-plane"></i>
+        </button>
       </form>
     </div>
   );

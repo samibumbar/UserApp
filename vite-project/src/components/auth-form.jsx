@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./auth.css";
+
 import { auth, db } from "./firebase.jsx";
 import {
   createUserWithEmailAndPassword,
@@ -188,11 +189,11 @@ function AuthForm() {
                   ? "Already have an account? Sign in"
                   : "Don't have an account? Sign up"}
               </p>
-              {!isSignUp && (
+              {/* {!isSignUp && (
                 <p onClick={handleResendVerification}>
                   Didn't receive verification email? Resend
                 </p>
-              )}
+              )} */}
             </Form>
           )}
         </Formik>
