@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import {
   collection,
@@ -16,7 +16,15 @@ function Messages() {
   const { conversationId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
-  const [friendName, setFriendName] = useState("Friend"); // Inițial "Friend"
+  const [friendName, setFriendName] = useState("Friend");
+  const [isCallActive, setIsCallActive] = useState(false);
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const peerConnection = useRef(
+    new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+    })
+  );
   const currentUser = auth.currentUser;
 
   useEffect(() => {
@@ -26,38 +34,35 @@ function Messages() {
       );
       if (conversationDoc.exists()) {
         const participants = conversationDoc.data().participants;
-        const friendId = participants.find((id) => id !== currentUser.uid); // Identifică prietenul
-
+        const friendId = participants.find((id) => id !== currentUser.uid);
         const friendDoc = await getDoc(doc(db, "users", friendId));
         if (friendDoc.exists()) {
-          setFriendName(friendDoc.data().name); // Setează numele prietenului
+          setFriendName(friendDoc.data().name);
         }
       }
     };
 
     fetchFriendName();
 
-    if (conversationId) {
-      const q = query(
-        collection(db, `conversations/${conversationId}/messages`),
-        orderBy("createdAt", "asc")
-      );
+    const q = query(
+      collection(db, `conversations/${conversationId}/messages`),
+      orderBy("createdAt", "asc")
+    );
 
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-        const fetchedMessages = snapshot.docs.map((doc) => ({
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setMessages(
+        snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-        }));
-        setMessages(fetchedMessages);
-      });
+        }))
+      );
+    });
 
-      return () => unsubscribe();
-    }
+    return () => unsubscribe();
   }, [conversationId, currentUser.uid]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
-
     if (newMessage.trim()) {
       const messageData = {
         text: newMessage,
@@ -72,16 +77,84 @@ function Messages() {
         );
         setNewMessage("");
       } catch (error) {
-        console.error("Error sending message: ", error);
+        console.error("Error sending message:", error);
       }
     }
   };
 
+  const startCall = async () => {
+    setIsCallActive(true);
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: true,
+    });
+    localVideoRef.current.srcObject = stream;
+    stream
+      .getTracks()
+      .forEach((track) => peerConnection.current.addTrack(track, stream));
+
+    peerConnection.current.ontrack = (event) => {
+      remoteVideoRef.current.srcObject = event.streams[0];
+    };
+
+    const offer = await peerConnection.current.createOffer();
+    await peerConnection.current.setLocalDescription(offer);
+
+    await addDoc(collection(db, "calls"), {
+      offer,
+      senderId: currentUser.uid,
+      conversationId,
+    });
+  };
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "calls"),
+      async (snapshot) => {
+        snapshot.docChanges().forEach(async (change) => {
+          const data = change.doc.data();
+          if (
+            data.conversationId === conversationId &&
+            data.senderId !== currentUser.uid
+          ) {
+            if (data.offer) {
+              await peerConnection.current.setRemoteDescription(
+                new RTCSessionDescription(data.offer)
+              );
+              const answer = await peerConnection.current.createAnswer();
+              await peerConnection.current.setLocalDescription(answer);
+              await addDoc(collection(db, "calls"), {
+                answer,
+                senderId: currentUser.uid,
+                conversationId,
+              });
+            } else if (data.answer) {
+              await peerConnection.current.setRemoteDescription(
+                new RTCSessionDescription(data.answer)
+              );
+            }
+          }
+        });
+      }
+    );
+    return () => unsubscribe();
+  }, [conversationId, currentUser.uid]);
+
   return (
     <div className="messages-container">
       <div className="chating-with">
-        <h2 className="friend-name-header"> {friendName}</h2>
+        <h2 className="friend-name-header">{friendName}</h2>
+        <button onClick={startCall} className="call-button">
+          Start Call
+        </button>
       </div>
+      {isCallActive && (
+        <div className="video-call">
+          <video ref={localVideoRef} autoPlay muted className="local-video" />
+          <video ref={remoteVideoRef} autoPlay className="remote-video" />
+          <button onClick={() => setIsCallActive(false)}>End Call</button>
+        </div>
+      )}
       <ul className="ul">
         {messages.map((message) => (
           <li

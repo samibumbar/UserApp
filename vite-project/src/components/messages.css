@@ -3,11 +3,12 @@
   max-width: 60rem;
   margin-top: 1rem;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-end;
   flex-direction: column;
-  padding: 1rem 2rem;
+  padding: 1rem;
   border-radius: 1rem;
+  max-height: 550px;
 }
 .chating-with {
   padding: 0.2rem 5rem;
@@ -20,7 +21,7 @@
 }
 .ul {
   overflow-y: auto;
-  max-height: 30rem;
+  max-height: 400px;
   padding: 0.2rem;
   list-style: none;
   list-style: none;
