@@ -12,14 +12,14 @@ import { useNavigate } from "react-router-dom";
 
 function ConversationList() {
   const [conversations, setConversations] = useState([]);
-  const [participantEmails, setParticipantEmails] = useState({});
+  const [participantNames, setParticipantNames] = useState({});
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
 
-  const fetchParticipantEmail = async (participantId) => {
+  const fetchParticipantName = async (participantId) => {
     const userDoc = await getDoc(doc(db, "users", participantId));
     if (userDoc.exists()) {
-      return userDoc.data().email;
+      return userDoc.data().name; // Obține numele utilizatorului în loc de email
     } else {
       return "Unknown";
     }
@@ -41,17 +41,17 @@ function ConversationList() {
 
         setConversations(fetchedConversations);
 
-        const emails = {};
+        const names = {};
         for (const conversation of fetchedConversations) {
           const otherParticipantId = conversation.participants.find(
             (id) => id !== currentUser.uid
           );
-          if (!emails[otherParticipantId]) {
-            const email = await fetchParticipantEmail(otherParticipantId);
-            emails[otherParticipantId] = email;
+          if (!names[otherParticipantId]) {
+            const name = await fetchParticipantName(otherParticipantId); // Obține numele prietenului
+            names[otherParticipantId] = name;
           }
         }
-        setParticipantEmails(emails);
+        setParticipantNames(names);
       }
     };
 
@@ -70,12 +70,12 @@ function ConversationList() {
           const otherParticipantId = conversation.participants.find(
             (id) => id !== currentUser.uid
           );
-          const email = participantEmails[otherParticipantId] || "Loading...";
+          const name = participantNames[otherParticipantId] || "Loading..."; // Folosește numele prietenului
 
           return (
             <li key={conversation.id}>
               <button onClick={() => goToConversation(conversation.id)}>
-                Go to Conversation with {email}
+                {name}
               </button>
             </li>
           );

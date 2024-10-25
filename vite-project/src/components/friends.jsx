@@ -20,22 +20,27 @@ function FriendsList() {
 
   const startConversation = async (friendId) => {
     try {
+      // Căutarea conversațiilor existente
       const existingConversationQuery = query(
         collection(db, "conversations"),
         where("participants", "array-contains", currentUser.uid)
       );
+
       const existingConversations = await getDocs(existingConversationQuery);
       let conversationId;
 
+      // Verificăm dacă există o conversație deja cu prietenul
       const existingConversation = existingConversations.docs.find((doc) =>
         doc.data().participants.includes(friendId)
       );
 
       if (existingConversation) {
+        // Conversația deja există, navigăm la ea
         conversationId = existingConversation.id;
       } else {
+        // Nu există conversație, o creăm
         const docRef = await addDoc(collection(db, "conversations"), {
-          participants: [currentUser.uid, friendId],
+          participants: [currentUser.uid, friendId], // Asigură-te că ambii participanți sunt incluși
           createdAt: new Date(),
         });
         conversationId = docRef.id;
