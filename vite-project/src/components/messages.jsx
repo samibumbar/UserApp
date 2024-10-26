@@ -10,7 +10,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { auth, db, storage } from "./firebase"; // Importă și storage
+import { auth, db, storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function Messages() {
@@ -75,6 +75,34 @@ function Messages() {
       } catch (error) {
         console.error("Error sending message:", error);
       }
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const imageRef = ref(
+      storage,
+      `images/${conversationId}/${Date.now()}_${file.name}`
+    );
+
+    try {
+      await uploadBytes(imageRef, file);
+      const imageURL = await getDownloadURL(imageRef);
+
+      const messageData = {
+        imageUrl: imageURL,
+        senderId: currentUser.uid,
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(
+        collection(db, `conversations/${conversationId}/messages`),
+        messageData
+      );
+    } catch (error) {
+      console.error("Error uploading image:", error);
     }
   };
 
@@ -188,6 +216,13 @@ function Messages() {
                       <source src={message.audioUrl} type="audio/wav" />
                       Your browser does not support the audio element.
                     </audio>
+                  )) ||
+                  (message.imageUrl && (
+                    <img
+                      src={message.imageUrl}
+                      alt="uploaded"
+                      style={{ maxWidth: "200px", maxHeight: "200px" }}
+                    />
                   ))}
               </div>
               <small className="timestamp">{time}</small>
@@ -197,6 +232,16 @@ function Messages() {
       </ul>
 
       <form className="form" onSubmit={sendMessage}>
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          style={{ display: "none" }}
+          id="imageUpload"
+        />
+        <label htmlFor="imageUpload" className="image-upload-label">
+          {/* <i className="fa-solid fa-image"></i> */}+
+        </label>
         <input
           type="text"
           value={newMessage}
