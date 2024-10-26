@@ -73,7 +73,6 @@ audio {
   font-size: 1rem;
 }
 
-/* Lista de conversații */
 .conv-container ul {
   list-style: none;
   padding: 0;
@@ -86,7 +85,6 @@ audio {
   margin-bottom: 0.5rem;
 }
 
-/* Butonul de conversație */
 .conv-container button {
   width: 100%;
   display: flex;
@@ -112,7 +110,7 @@ li {
   clear: both;
   font-size: 0.8rem;
 }
-/* Stil pentru mesajele trimise de utilizator */
+
 .message.you {
   background-color: #daf7a6;
   align-self: flex-end;
@@ -125,7 +123,6 @@ li {
   padding: 0.5rem;
 }
 
-/* Stil pentru mesajele primite */
 .message.friend {
   background-color: #f1f1f1;
   align-self: flex-start;
@@ -138,24 +135,20 @@ li {
   padding: 0.5rem;
 }
 
-/* Stil pentru conținutul fiecărui mesaj */
 .message-content {
   display: flex;
   flex-direction: column;
 }
 
-/* Stil pentru textul mesajului */
 .message-text {
   margin: 0;
 }
 
-/* Stil pentru fișierul audio */
 .message-audio {
   max-width: 100%;
   margin-top: 0.5rem;
 }
 
-/* Stil pentru imaginea din mesaj */
 .message-image {
   max-width: 200px;
   max-height: 200px;
