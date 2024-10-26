@@ -4,24 +4,25 @@
   margin-top: 1rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+
   flex-direction: column;
   padding: 1rem;
   border-radius: 1rem;
-  max-height: 550px;
+  height: 80vh;
 }
 .chating-with {
   padding: 0.2rem 5rem;
-  background: linear-gradient(to right, #4b0082, #800080);
+
   border-radius: 0.4rem;
 }
 .chating-with h2 {
+  text-align: left;
   font-size: 18px;
   line-height: 0;
 }
 .ul {
   overflow-y: auto;
-  max-height: 400px;
+  max-height: 100%;
   padding: 0.2rem;
   list-style: none;
   list-style: none;

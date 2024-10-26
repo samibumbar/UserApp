@@ -10,21 +10,17 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { auth, db, storage } from "./firebase"; // Importă și storage
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function Messages() {
   const { conversationId } = useParams();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [friendName, setFriendName] = useState("Friend");
-  const [isCallActive, setIsCallActive] = useState(false);
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-  const peerConnection = useRef(
-    new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    })
-  );
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [audioChunks, setAudioChunks] = useState([]);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
@@ -82,106 +78,124 @@ function Messages() {
     }
   };
 
-  const startCall = async () => {
-    setIsCallActive(true);
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
-    localVideoRef.current.srcObject = stream;
-    stream
-      .getTracks()
-      .forEach((track) => peerConnection.current.addTrack(track, stream));
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
 
-    peerConnection.current.ontrack = (event) => {
-      remoteVideoRef.current.srcObject = event.streams[0];
-    };
+      setIsRecording(true);
+      const tempAudioChunks = [];
 
-    const offer = await peerConnection.current.createOffer();
-    await peerConnection.current.setLocalDescription(offer);
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          tempAudioChunks.push(event.data);
+        }
+      };
 
-    await addDoc(collection(db, "calls"), {
-      offer,
-      senderId: currentUser.uid,
-      conversationId,
-    });
+      recorder.onstop = async () => {
+        if (tempAudioChunks.length > 0) {
+          await saveAudioMessage(tempAudioChunks);
+        } else {
+          console.error(
+            "Audio chunks are empty! Înregistrarea nu a fost capturată corect."
+          );
+        }
+        stream.getTracks().forEach((track) => track.stop());
+      };
+
+      recorder.start();
+      setMediaRecorder(recorder);
+    } catch (error) {
+      console.error("Eroare la inițializarea înregistrării audio:", error);
+    }
   };
 
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      collection(db, "calls"),
-      async (snapshot) => {
-        snapshot.docChanges().forEach(async (change) => {
-          const data = change.doc.data();
-          if (
-            data.conversationId === conversationId &&
-            data.senderId !== currentUser.uid
-          ) {
-            try {
-              if (
-                data.offer &&
-                peerConnection.current.signalingState === "stable"
-              ) {
-                await peerConnection.current.setRemoteDescription(
-                  new RTCSessionDescription(data.offer)
-                );
-                const answer = await peerConnection.current.createAnswer();
-                await peerConnection.current.setLocalDescription(answer);
-                await addDoc(collection(db, "calls"), {
-                  answer,
-                  senderId: currentUser.uid,
-                  conversationId,
-                });
-              } else if (
-                data.answer &&
-                peerConnection.current.signalingState === "have-local-offer"
-              ) {
-                await peerConnection.current.setRemoteDescription(
-                  new RTCSessionDescription(data.answer)
-                );
-              }
-            } catch (error) {
-              console.error("Error handling offer/answer:", error);
-            }
-          }
-        });
-      }
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      setIsRecording(false);
+      setTimeout(() => {
+        mediaRecorder.stop();
+      }, 500);
+    } else {
+      console.error("MediaRecorder nu este inițializat.");
+    }
+  };
+
+  const saveAudioMessage = async (audioChunks) => {
+    if (audioChunks.length === 0) {
+      console.error(
+        "Audio chunks are empty! Înregistrarea nu a fost capturată corect."
+      );
+      return;
+    }
+
+    const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+    const audioRef = ref(
+      storage,
+      `audioMessages/${conversationId}/${Date.now()}.wav`
     );
-    return () => unsubscribe();
-  }, [conversationId, currentUser.uid]);
+
+    try {
+      await uploadBytes(audioRef, audioBlob);
+      const audioURL = await getDownloadURL(audioRef);
+
+      const messageData = {
+        audioUrl: audioURL,
+        senderId: currentUser.uid,
+        createdAt: serverTimestamp(),
+      };
+
+      await addDoc(
+        collection(db, `conversations/${conversationId}/messages`),
+        messageData
+      );
+    } catch (error) {
+      console.error("Error saving audio message:", error);
+    }
+  };
 
   return (
     <div className="messages-container">
       <div className="chating-with">
-        <h2 className="friend-name-header">{friendName}</h2>
-        <button onClick={startCall} className="call-button">
-          Start Call
-        </button>
+        <h2>{friendName}</h2>
       </div>
-      {isCallActive && (
-        <div className="video-call">
-          <video ref={localVideoRef} autoPlay muted className="local-video" />
-          <video ref={remoteVideoRef} autoPlay className="remote-video" />
-          <button onClick={() => setIsCallActive(false)}>End Call</button>
-        </div>
-      )}
+
       <ul className="ul">
-        {messages.map((message) => (
-          <li
-            key={message.id}
-            className={
-              message.senderId === currentUser.uid
-                ? "message you"
-                : "message friend"
-            }
-          >
-            <strong>
-              {message.senderId === currentUser.uid ? "You" : friendName}
-            </strong>{" "}
-            {message.text}
-          </li>
-        ))}
+        {messages.map((message) => {
+          const time = message.createdAt
+            ? message.createdAt.toDate().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Sending...";
+
+          return (
+            <li
+              key={message.id}
+              className={
+                message.senderId === currentUser.uid
+                  ? "message you"
+                  : "message friend"
+              }
+            >
+              <div>
+                <strong>
+                  {message.senderId === currentUser.uid ? "You" : friendName}
+                </strong>{" "}
+                {message.text ||
+                  (message.audioUrl && (
+                    <audio controls>
+                      <source src={message.audioUrl} type="audio/wav" />
+                      Your browser does not support the audio element.
+                    </audio>
+                  ))}
+              </div>
+              <small className="timestamp">{time}</small>
+            </li>
+          );
+        })}
       </ul>
+
       <form className="form" onSubmit={sendMessage}>
         <input
           type="text"
@@ -192,6 +206,18 @@ function Messages() {
         <button className="send-message" type="submit">
           <i className="fa-solid fa-paper-plane"></i>
         </button>
+        <div className="voice-controls">
+          <button
+            className="send-message"
+            onClick={isRecording ? stopRecording : startRecording}
+          >
+            {isRecording ? (
+              <i className="fa-solid fa-microphone-slash"></i>
+            ) : (
+              <i className="fa-solid fa-microphone"></i>
+            )}
+          </button>
+        </div>
       </form>
     </div>
   );
