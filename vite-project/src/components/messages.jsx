@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+
+import { useParams, useNavigate } from "react-router-dom";
 import {
   collection,
   query,
@@ -15,12 +16,12 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function Messages() {
   const { conversationId } = useParams();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [friendName, setFriendName] = useState("Friend");
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
-  const [audioChunks, setAudioChunks] = useState([]);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
@@ -185,6 +186,12 @@ function Messages() {
   return (
     <div className="messages-container">
       <div className="chating-with">
+        <button
+          onClick={() => navigate("/messages/conversation-list")}
+          className="back-button"
+        >
+          <i className="fa-solid fa-chevron-left"></i>
+        </button>
         <h2>{friendName}</h2>
       </div>
 
@@ -206,24 +213,24 @@ function Messages() {
                   : "message friend"
               }
             >
-              <div>
+              <div className="message-content">
                 <strong>
                   {message.senderId === currentUser.uid ? "You" : friendName}
                 </strong>{" "}
-                {message.text ||
-                  (message.audioUrl && (
-                    <audio controls>
-                      <source src={message.audioUrl} type="audio/wav" />
-                      Your browser does not support the audio element.
-                    </audio>
-                  )) ||
-                  (message.imageUrl && (
-                    <img
-                      src={message.imageUrl}
-                      alt="uploaded"
-                      style={{ maxWidth: "200px", maxHeight: "200px" }}
-                    />
-                  ))}
+                {message.text ? (
+                  <p className="message-text">{message.text}</p>
+                ) : message.audioUrl ? (
+                  <audio controls className="message-audio">
+                    <source src={message.audioUrl} type="audio/wav" />
+                    Your browser does not support the audio element.
+                  </audio>
+                ) : message.imageUrl ? (
+                  <img
+                    src={message.imageUrl}
+                    alt="uploaded"
+                    className="message-image"
+                  />
+                ) : null}
               </div>
               <small className="timestamp">{time}</small>
             </li>
@@ -240,7 +247,7 @@ function Messages() {
           id="imageUpload"
         />
         <label htmlFor="imageUpload" className="image-upload-label">
-          {/* <i className="fa-solid fa-image"></i> */}+
+          <i className="fa-solid fa-image"></i>
         </label>
         <input
           type="text"

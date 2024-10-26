@@ -14,16 +14,14 @@ import { useNavigate } from "react-router-dom";
 function ConversationList() {
   const [conversations, setConversations] = useState([]);
   const [participantNames, setParticipantNames] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredConversations, setFilteredConversations] = useState([]);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
 
   const fetchParticipantName = async (participantId) => {
     const userDoc = await getDoc(doc(db, "users", participantId));
-    if (userDoc.exists()) {
-      return userDoc.data().name; // Obține numele utilizatorului în loc de email
-    } else {
-      return "Unknown";
-    }
+    return userDoc.exists() ? userDoc.data().name : "Unknown";
   };
 
   useEffect(() => {
@@ -41,6 +39,7 @@ function ConversationList() {
         }));
 
         setConversations(fetchedConversations);
+        setFilteredConversations(fetchedConversations);
 
         const names = {};
         for (const conversation of fetchedConversations) {
@@ -48,7 +47,7 @@ function ConversationList() {
             (id) => id !== currentUser.uid
           );
           if (!names[otherParticipantId]) {
-            const name = await fetchParticipantName(otherParticipantId); // Obține numele prietenului
+            const name = await fetchParticipantName(otherParticipantId);
             names[otherParticipantId] = name;
           }
         }
@@ -59,19 +58,38 @@ function ConversationList() {
     fetchConversations();
   }, [currentUser]);
 
+  useEffect(() => {
+    const filtered = conversations.filter((conversation) => {
+      const otherParticipantId = conversation.participants.find(
+        (id) => id !== currentUser.uid
+      );
+      const name = participantNames[otherParticipantId] || "";
+      return name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+    setFilteredConversations(filtered);
+  }, [searchTerm, conversations, participantNames, currentUser]);
+
   const goToConversation = (conversationId) => {
     navigate(`/messages/${conversationId}`);
   };
 
   return (
     <div className="conv-container">
-      <h2>Your Conversations</h2>
+      <h2>Chats</h2>
+      <div className="search-bar">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search conversations..."
+        />
+      </div>
       <ul>
-        {conversations.map((conversation) => {
+        {filteredConversations.map((conversation) => {
           const otherParticipantId = conversation.participants.find(
             (id) => id !== currentUser.uid
           );
-          const name = participantNames[otherParticipantId] || "Loading..."; // Folosește numele prietenului
+          const name = participantNames[otherParticipantId] || "Loading...";
 
           return (
             <li key={conversation.id}>

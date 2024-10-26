@@ -3,12 +3,13 @@
   line-height: 1.5;
   font-weight: 400;
   display: flex;
+
   justify-content: center;
   align-items: center;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  /* background-color: #242424; */
-  background: linear-gradient(to right, #4b0082, #800080);
+  background-color: #242424;
+  /* background: linear-gradient(to right, #4b0082, #800080); */
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,9 +28,8 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  display: flex;
-  min-width: 320px;
-  min-height: 100vh;
+  justify-content: center;
+  width: 100%;
 }
 
 h1 {

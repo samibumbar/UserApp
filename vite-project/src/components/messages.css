@@ -6,13 +6,14 @@
   justify-content: space-between;
 
   flex-direction: column;
-  padding: 1rem;
+  padding: 2rem 1rem;
   border-radius: 1rem;
-  height: 80vh;
+  height: 100%;
 }
 .chating-with {
-  padding: 0.2rem 5rem;
-
+  display: flex;
+  justify-content: flex-start;
+  gap: 6rem;
   border-radius: 0.4rem;
 }
 .chating-with h2 {
@@ -22,13 +23,17 @@
 }
 .ul {
   overflow-y: auto;
-  max-height: 100%;
+  height: 80vh;
   padding: 0.2rem;
   list-style: none;
   list-style: none;
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+audio {
+  width: 15rem;
+  height: 2rem;
 }
 .unread {
   display: inline-block;
@@ -38,53 +43,126 @@
   border-radius: 50%;
   margin-left: 10px;
 }
-.conv-container {
-  min-width: 20rem;
 
-  margin: 0;
+.conv-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1rem;
+  height: 100vh;
+  max-width: 28rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+/* Bara de căutare */
+.search-bar {
+  width: 100%; /* Asigură că inputul ocupă întreaga lățime */
+
+  box-sizing: border-box;
+}
+
+.search-bar input {
+  align-items: center;
+  width: 97%;
+  padding: 0.8rem 0.5rem;
+  margin-bottom: 1rem;
+  border-radius: 5px;
+  border: none;
+  font-size: 1rem;
+}
+
+/* Lista de conversații */
+.conv-container ul {
+  list-style: none;
   padding: 0;
+  width: 100%;
+  margin: 0;
 }
 
 .conv-container li {
   width: 100%;
+  margin-bottom: 0.5rem;
 }
 
+/* Butonul de conversație */
 .conv-container button {
-  margin-left: 0;
   width: 100%;
-  margin-left: -2.5rem;
+  display: flex;
+  text-align: left;
+  background-color: #fff;
+  padding: 1rem 6rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-size: 1.3rem;
+
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.conv-container button:hover {
+  background-color: #e8f0fe;
 }
 
 li {
   display: flex;
-  padding: 0.1rem;
+  padding: 0;
   justify-content: space-between;
   clear: both;
   font-size: 0.8rem;
 }
+/* Stil pentru mesajele trimise de utilizator */
 .message.you {
-  background-color: #daf7a6; /* culoare pentru mesajele tale */
+  background-color: #daf7a6;
   align-self: flex-end;
   text-align: right;
-  float: right;
   color: #000;
   margin-bottom: 0.2rem;
   border-radius: 0.4rem;
   display: flex;
   flex-direction: column;
+  padding: 0.5rem;
 }
 
+/* Stil pentru mesajele primite */
 .message.friend {
   background-color: #f1f1f1;
   align-self: flex-start;
   text-align: left;
+  color: #333;
+  margin-bottom: 0.2rem;
+  border-radius: 0.4rem;
   display: flex;
   flex-direction: column;
-  float: left;
-  margin-bottom: 0.2rem;
-  color: #333;
-  border-radius: 0.4rem;
+  padding: 0.5rem;
 }
+
+/* Stil pentru conținutul fiecărui mesaj */
+.message-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Stil pentru textul mesajului */
+.message-text {
+  margin: 0;
+}
+
+/* Stil pentru fișierul audio */
+.message-audio {
+  max-width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* Stil pentru imaginea din mesaj */
+.message-image {
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 0.3rem;
+  margin-top: 0.5rem;
+}
+
 .form {
   display: flex;
   flex-direction: row;
