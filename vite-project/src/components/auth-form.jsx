@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "./auth.css";
-
 import { auth, db } from "./firebase.jsx";
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   sendEmailVerification,
   signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
@@ -104,12 +105,26 @@ function AuthForm() {
     }
   };
 
-  const handleResendVerification = async () => {
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider();
     try {
-      await sendEmailVerification(auth.currentUser);
-      toast.success("Verification email resent successfully.");
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (!userDoc.exists()) {
+        // Creăm profilul dacă nu există deja
+        await setDoc(doc(db, "users", user.uid), {
+          name: user.displayName,
+          email: user.email,
+          birthdate: "",
+        });
+      }
+
+      toast.success("Successfully logged in with Google!");
+      navigate("/messages");
     } catch (error) {
-      toast.error(`Error resending verification email: ${error.message}`);
+      toast.error(`Google Sign-In error: ${error.message}`);
     }
   };
 
@@ -184,19 +199,19 @@ function AuthForm() {
                   ? "Sign Up"
                   : "Login"}
               </button>
+              <button className="google-sign-in" onClick={handleGoogleSignIn}>
+                <i className="fa-brands fa-google"></i>
+                oogle login
+              </button>
               <p onClick={() => setIsSignUp(!isSignUp)}>
                 {isSignUp
                   ? "Already have an account? Sign in"
                   : "Don't have an account? Sign up"}
               </p>
-              {/* {!isSignUp && (
-                <p onClick={handleResendVerification}>
-                  Didn't receive verification email? Resend
-                </p>
-              )} */}
             </Form>
           )}
         </Formik>
+
         <ToastContainer />
       </div>
     </div>

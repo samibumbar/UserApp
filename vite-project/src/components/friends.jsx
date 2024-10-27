@@ -6,6 +6,7 @@ import "./friends.css";
 
 function FriendsList() {
   const [friends, setFriends] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
 
@@ -72,11 +73,25 @@ function FriendsList() {
     return initials;
   };
 
+  const filteredFriends = friends.filter((friend) =>
+    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="friends-container">
       <h2>Contacts</h2>
+
+      {/* Input pentru căutare */}
+      <input
+        type="text"
+        placeholder="Search contacts..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="search-input"
+      />
+
       <ul>
-        {friends.map((friend) => (
+        {filteredFriends.map((friend) => (
           <li
             key={friend.id}
             onClick={() =>

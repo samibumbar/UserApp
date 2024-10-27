@@ -4,12 +4,16 @@
   height: 85vh;
   display: flex;
   flex-direction: column;
-
+  justify-content: center;
   align-items: center;
 }
 .friends-container h2 {
   font-size: 1.5rem;
   letter-spacing: 0.1rem;
+}
+.friends-container input {
+  padding: 0.8rem 3.4rem;
+  margin-left: 1.2rem;
 }
 span {
   font-size: 1.2rem;
