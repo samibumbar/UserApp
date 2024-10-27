@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-
+import EmojiPicker from "emoji-picker-react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   collection,
@@ -20,9 +20,13 @@ function Messages() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [friendName, setFriendName] = useState("Friend");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [audioFile, setAudioFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   const currentUser = auth.currentUser;
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     const fetchFriendName = async () => {
@@ -58,9 +62,15 @@ function Messages() {
     return () => unsubscribe();
   }, [conversationId, currentUser.uid]);
 
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (newMessage.trim()) {
+    if (newMessage.trim() || selectedImage || audioFile) {
       const messageData = {
         text: newMessage,
         senderId: currentUser.uid,
@@ -68,119 +78,71 @@ function Messages() {
       };
 
       try {
-        await addDoc(
+        const docRef = await addDoc(
           collection(db, `conversations/${conversationId}/messages`),
           messageData
         );
+
+        if (selectedImage) await handleImageUpload(docRef.id);
+        if (audioFile) await handleAudioUpload(docRef.id);
+
         setNewMessage("");
+        setSelectedImage(null);
+        setAudioFile(null);
       } catch (error) {
         console.error("Error sending message:", error);
       }
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
+  const handleImageUpload = async (docId) => {
     const imageRef = ref(
       storage,
-      `images/${conversationId}/${Date.now()}_${file.name}`
+      `images/${conversationId}/${Date.now()}_${selectedImage.name}`
     );
 
-    try {
-      await uploadBytes(imageRef, file);
-      const imageURL = await getDownloadURL(imageRef);
+    await uploadBytes(imageRef, selectedImage);
+    const imageURL = await getDownloadURL(imageRef);
 
-      const messageData = {
-        imageUrl: imageURL,
-        senderId: currentUser.uid,
-        createdAt: serverTimestamp(),
-      };
+    const messageRef = doc(
+      db,
+      `conversations/${conversationId}/messages`,
+      docId
+    );
+    await updateDoc(messageRef, { imageUrl: imageURL });
+  };
 
-      await addDoc(
-        collection(db, `conversations/${conversationId}/messages`),
-        messageData
-      );
-    } catch (error) {
-      console.error("Error uploading image:", error);
-    }
+  const handleEmojiClick = (emojiObject) => {
+    setNewMessage((prev) => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
   };
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
-
       setIsRecording(true);
-      const tempAudioChunks = [];
+      const chunks = [];
 
       recorder.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          tempAudioChunks.push(event.data);
-        }
+        if (event.data.size > 0) chunks.push(event.data);
       };
 
-      recorder.onstop = async () => {
-        if (tempAudioChunks.length > 0) {
-          await saveAudioMessage(tempAudioChunks);
-        } else {
-          console.error(
-            "Audio chunks are empty! Înregistrarea nu a fost capturată corect."
-          );
-        }
-        stream.getTracks().forEach((track) => track.stop());
+      recorder.onstop = () => {
+        const audioBlob = new Blob(chunks, { type: "audio/wav" });
+        setAudioFile(audioBlob);
+        setIsRecording(false);
       };
 
       recorder.start();
       setMediaRecorder(recorder);
     } catch (error) {
-      console.error("Eroare la inițializarea înregistrării audio:", error);
+      console.error("Audio recording error:", error);
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder) {
-      setIsRecording(false);
-      setTimeout(() => {
-        mediaRecorder.stop();
-      }, 500);
-    } else {
-      console.error("MediaRecorder nu este inițializat.");
-    }
-  };
-
-  const saveAudioMessage = async (audioChunks) => {
-    if (audioChunks.length === 0) {
-      console.error(
-        "Audio chunks are empty! Înregistrarea nu a fost capturată corect."
-      );
-      return;
-    }
-
-    const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-    const audioRef = ref(
-      storage,
-      `audioMessages/${conversationId}/${Date.now()}.wav`
-    );
-
-    try {
-      await uploadBytes(audioRef, audioBlob);
-      const audioURL = await getDownloadURL(audioRef);
-
-      const messageData = {
-        audioUrl: audioURL,
-        senderId: currentUser.uid,
-        createdAt: serverTimestamp(),
-      };
-
-      await addDoc(
-        collection(db, `conversations/${conversationId}/messages`),
-        messageData
-      );
-    } catch (error) {
-      console.error("Error saving audio message:", error);
-    }
+    if (mediaRecorder) mediaRecorder.stop();
   };
 
   return (
@@ -196,80 +158,102 @@ function Messages() {
       </div>
 
       <ul className="ul">
-        {messages.map((message) => {
-          const time = message.createdAt
-            ? message.createdAt.toDate().toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })
-            : "Sending...";
-
-          return (
-            <li
-              key={message.id}
-              className={
-                message.senderId === currentUser.uid
-                  ? "message you"
-                  : "message friend"
-              }
-            >
-              <div className="message-content">
-                <strong>
-                  {message.senderId === currentUser.uid ? "You" : friendName}
-                </strong>{" "}
-                {message.text ? (
-                  <p className="message-text">{message.text}</p>
-                ) : message.audioUrl ? (
-                  <audio controls className="message-audio">
-                    <source src={message.audioUrl} type="audio/wav" />
-                    Your browser does not support the audio element.
-                  </audio>
-                ) : message.imageUrl ? (
-                  <img
-                    src={message.imageUrl}
-                    alt="uploaded"
-                    className="message-image"
-                  />
-                ) : null}
-              </div>
-              <small className="timestamp">{time}</small>
-            </li>
-          );
-        })}
+        {messages.map((message) => (
+          <li
+            key={message.id}
+            className={
+              message.senderId === currentUser.uid
+                ? "message you"
+                : "message friend"
+            }
+          >
+            <div className="message-content">
+              <strong>
+                {message.senderId === currentUser.uid ? "You" : friendName}
+              </strong>{" "}
+              {message.text}
+              {message.imageUrl && (
+                <img
+                  src={message.imageUrl}
+                  alt="uploaded"
+                  className="message-image"
+                />
+              )}
+              {message.audioUrl && (
+                <audio controls className="message-audio">
+                  <source src={message.audioUrl} type="audio/wav" />
+                  Your browser does not support the audio element.
+                </audio>
+              )}
+            </div>
+          </li>
+        ))}
+        <div ref={messagesEndRef} />
       </ul>
+
+      {showEmojiPicker && (
+        <div className="emoji-picker-modal">
+          <button
+            className="close-emoji-picker"
+            onClick={() => setShowEmojiPicker(false)}
+          >
+            X
+          </button>
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            pickerStyle={{
+              width: "300px", // se adaptează la dimensiunea părintelui
+              maxHeight: "300px", // sau orice valoare dorești pentru a limita înălțimea
+              overflowY: "auto",
+              // pentru a permite scroll în cazul în care este nevoie
+            }}
+          />
+        </div>
+      )}
 
       <form className="form" onSubmit={sendMessage}>
         <input
           type="file"
           accept="image/*"
-          onChange={handleImageUpload}
+          onChange={(e) => setSelectedImage(e.target.files[0])}
           style={{ display: "none" }}
           id="imageUpload"
         />
         <label htmlFor="imageUpload" className="image-upload-label">
           <i className="fa-solid fa-image"></i>
         </label>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message"
-        />
+
+        <div className="input-container">
+          <input
+            className="message-input"
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message"
+          />
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((val) => !val)}
+            className="emoji-button"
+          >
+            <i className="fa-solid fa-icons"></i>
+          </button>
+        </div>
+
+        <div className="voice-controls">
+          {isRecording ? (
+            <button onClick={stopRecording} className="send-message">
+              <i className="fa-solid fa-stop"></i>
+            </button>
+          ) : (
+            <button onClick={startRecording} className="send-message">
+              <i className="fa-solid fa-microphone"></i>
+            </button>
+          )}
+        </div>
         <button className="send-message" type="submit">
           <i className="fa-solid fa-paper-plane"></i>
         </button>
-        <div className="voice-controls">
-          <button
-            className="send-message"
-            onClick={isRecording ? stopRecording : startRecording}
-          >
-            {isRecording ? (
-              <i className="fa-solid fa-microphone-slash"></i>
-            ) : (
-              <i className="fa-solid fa-microphone"></i>
-            )}
-          </button>
-        </div>
       </form>
     </div>
   );

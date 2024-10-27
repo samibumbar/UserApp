@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./messages.css";
 import {
   collection,
@@ -18,6 +18,7 @@ function ConversationList() {
   const [filteredConversations, setFilteredConversations] = useState([]);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
+  const listRef = useRef(null); // Ref pentru lista de mesaje
 
   const fetchParticipantName = async (participantId) => {
     const userDoc = await getDoc(doc(db, "users", participantId));
@@ -69,6 +70,13 @@ function ConversationList() {
     setFilteredConversations(filtered);
   }, [searchTerm, conversations, participantNames, currentUser]);
 
+  useEffect(() => {
+    // Derulează automat la ultimul element
+    if (listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+  }, [filteredConversations]); // Reactualizează când conversațiile filtrate se schimbă
+
   const goToConversation = (conversationId) => {
     navigate(`/messages/${conversationId}`);
   };
@@ -84,7 +92,7 @@ function ConversationList() {
           placeholder="Search conversations..."
         />
       </div>
-      <ul>
+      <ul ref={listRef} className="conversation-list">
         {filteredConversations.map((conversation) => {
           const otherParticipantId = conversation.participants.find(
             (id) => id !== currentUser.uid
