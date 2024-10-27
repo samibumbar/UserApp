@@ -1,0 +1,50 @@
+.friends-container {
+  width: 100%;
+
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+}
+.friends-container h2 {
+  font-size: 1.5rem;
+  letter-spacing: 0.1rem;
+}
+span {
+  font-size: 1.2rem;
+  margin-right: 2rem;
+}
+.friends-container ul {
+  width: 100%;
+  display: flex;
+
+  flex-direction: column;
+  gap: 0.5rem;
+
+  height: 80%;
+}
+.friends-container li {
+  cursor: pointer;
+  border-radius: 5px;
+  width: 90%;
+  padding: 0.3rem;
+  background: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+}
+.friend-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 1rem;
+  width: 100%;
+}
+.friend-avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 10%;
+}

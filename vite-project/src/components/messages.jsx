@@ -202,7 +202,7 @@ function Messages() {
           <EmojiPicker
             onEmojiClick={handleEmojiClick}
             pickerStyle={{
-              width: "300px", // se adaptează la dimensiunea părintelui
+              width: "300px",
               maxHeight: "300px", // sau orice valoare dorești pentru a limita înălțimea
               overflowY: "auto",
               // pentru a permite scroll în cazul în care este nevoie

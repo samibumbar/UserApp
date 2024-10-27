@@ -2,11 +2,27 @@ import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, where, addDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { useNavigate } from "react-router-dom";
+import "./friends.css";
 
 function FriendsList() {
   const [friends, setFriends] = useState([]);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
+
+  // Funcția pentru a genera o culoare bazată pe ID-ul prietenului
+  const generateColorFromId = (id) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const color = `#${((hash >> 24) & 0xff).toString(16).padStart(2, "0")}${(
+      (hash >> 16) &
+      0xff
+    )
+      .toString(16)
+      .padStart(2, "0")}${((hash >> 8) & 0xff).toString(16).padStart(2, "0")}`;
+    return color;
+  };
 
   useEffect(() => {
     const fetchFriends = async () => {
@@ -20,7 +36,6 @@ function FriendsList() {
 
   const startConversation = async (friendId) => {
     try {
-      // Căutarea conversațiilor existente
       const existingConversationQuery = query(
         collection(db, "conversations"),
         where("participants", "array-contains", currentUser.uid)
@@ -29,18 +44,15 @@ function FriendsList() {
       const existingConversations = await getDocs(existingConversationQuery);
       let conversationId;
 
-      // Verificăm dacă există o conversație deja cu prietenul
       const existingConversation = existingConversations.docs.find((doc) =>
         doc.data().participants.includes(friendId)
       );
 
       if (existingConversation) {
-        // Conversația deja există, navigăm la ea
         conversationId = existingConversation.id;
       } else {
-        // Nu există conversație, o creăm
         const docRef = await addDoc(collection(db, "conversations"), {
-          participants: [currentUser.uid, friendId], // Asigură-te că ambii participanți sunt incluși
+          participants: [currentUser.uid, friendId],
           createdAt: new Date(),
         });
         conversationId = docRef.id;
@@ -52,18 +64,33 @@ function FriendsList() {
     }
   };
 
+  const getInitials = (name) => {
+    const nameParts = name.split(" ");
+    const initials =
+      nameParts[0][0].toUpperCase() +
+      (nameParts[1] ? nameParts[1][0].toUpperCase() : "");
+    return initials;
+  };
+
   return (
-    <div>
-      <h2>Friends</h2>
+    <div className="friends-container">
+      <h2>Contacts</h2>
       <ul>
         {friends.map((friend) => (
-          <li key={friend.id}>
-            {friend.name} - {friend.email}
-            {friend.id !== currentUser.uid && (
-              <button onClick={() => startConversation(friend.id)}>
-                Message
-              </button>
-            )}
+          <li
+            key={friend.id}
+            onClick={() =>
+              friend.id !== currentUser.uid && startConversation(friend.id)
+            }
+            className="friend-item"
+          >
+            <div
+              className="friend-avatar"
+              style={{ backgroundColor: generateColorFromId(friend.id) }}
+            >
+              {getInitials(friend.name)}
+            </div>
+            <span>{friend.name}</span>
           </li>
         ))}
       </ul>

@@ -18,7 +18,7 @@ function Navbar() {
         </li>
         <li>
           <Link to="/friends">
-            <i className="fa-solid fa-user-group"></i>
+            <i className="fa-solid fa-address-book"></i>
           </Link>
         </li>
       </ul>
