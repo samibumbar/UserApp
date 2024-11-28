@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import EmojiPicker from "emoji-picker-react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -10,9 +10,31 @@ import {
   serverTimestamp,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db, storage } from "./firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  Box,
+  Typography,
+  TextField,
+  List,
+  ListItem,
+  Paper,
+  // IconButton,
+  // CircularProgress,
+  Dialog,
+  DialogContent,
+  Button,
+} from "@mui/material";
+import {
+  Send,
+  Image,
+  EmojiEmotions,
+  Mic,
+  Stop,
+  ArrowBack,
+} from "@mui/icons-material";
 
 function Messages() {
   const { conversationId } = useParams();
@@ -25,9 +47,11 @@ function Messages() {
   const [audioFile, setAudioFile] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState(null);
+  const [zoomedImage, setZoomedImage] = useState(null);
   const currentUser = auth.currentUser;
   const messagesEndRef = useRef(null);
 
+  // Fetch participant's name
   useEffect(() => {
     const fetchFriendName = async () => {
       const conversationDoc = await getDoc(
@@ -62,6 +86,7 @@ function Messages() {
     return () => unsubscribe();
   }, [conversationId, currentUser.uid]);
 
+  // Scroll to bottom on new messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -112,6 +137,23 @@ function Messages() {
     await updateDoc(messageRef, { imageUrl: imageURL });
   };
 
+  const handleAudioUpload = async (docId) => {
+    const audioRef = ref(
+      storage,
+      `audio/${conversationId}/${Date.now()}_audio.wav`
+    );
+
+    await uploadBytes(audioRef, audioFile);
+    const audioURL = await getDownloadURL(audioRef);
+
+    const messageRef = doc(
+      db,
+      `conversations/${conversationId}/messages`,
+      docId
+    );
+    await updateDoc(messageRef, { audioUrl: audioURL });
+  };
+
   const handleEmojiClick = (emojiObject) => {
     setNewMessage((prev) => prev + emojiObject.emoji);
     setShowEmojiPicker(false);
@@ -146,116 +188,235 @@ function Messages() {
   };
 
   return (
-    <div className="messages-container">
-      <div className="chating-with">
-        <button
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "linear-gradient(135deg, #f4f6f8, #ffffff)",
+      }}
+    >
+      {/* Header Bar */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          padding: 2,
+          background: "#6a11cb",
+          color: "white",
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+        }}
+      >
+        <Button
           onClick={() => navigate("/messages/conversation-list")}
-          className="back-button"
+          variant="contained"
+          sx={{
+            background: "#6a11cb",
+            "&:hover": {
+              background: "#4a0f9a",
+            },
+          }}
         >
-          <i className="fa-solid fa-chevron-left"></i>
-        </button>
-        <h2>{friendName}</h2>
-      </div>
+          <ArrowBack />
+        </Button>
+        <Typography variant="h6" sx={{ ml: 2 }}>
+          {friendName}
+        </Typography>
+      </Box>
 
-      <ul className="ul">
-        {messages.map((message) => (
-          <li
-            key={message.id}
-            className={
-              message.senderId === currentUser.uid
-                ? "message you"
-                : "message friend"
-            }
-          >
-            <div className="message-content">
-              <strong>
-                {message.senderId === currentUser.uid ? "You" : friendName}
-              </strong>{" "}
-              {message.text}
-              {message.imageUrl && (
-                <img
-                  src={message.imageUrl}
-                  alt="uploaded"
-                  className="message-image"
-                />
-              )}
-              {message.audioUrl && (
-                <audio controls className="message-audio">
-                  <source src={message.audioUrl} type="audio/wav" />
-                  Your browser does not support the audio element.
-                </audio>
-              )}
-            </div>
-          </li>
-        ))}
-        <div ref={messagesEndRef} />
-      </ul>
+      {/* Messages Section */}
+      <Box
+        sx={{
+          flex: 1,
+          overflowY: "auto",
+          marginTop: "64px",
+          padding: 2,
+        }}
+      >
+        <List>
+          {messages.map((message) => (
+            <ListItem
+              key={message.id}
+              sx={{
+                justifyContent:
+                  message.senderId === currentUser.uid
+                    ? "flex-end"
+                    : "flex-start",
+              }}
+            >
+              <Paper
+                elevation={3}
+                sx={{
+                  padding: 1,
+                  maxWidth: "70%",
+                  background:
+                    message.senderId === currentUser.uid
+                      ? "#6a11cb"
+                      : "#f1f1f1",
+                  color:
+                    message.senderId === currentUser.uid ? "white" : "black",
+                }}
+              >
+                <Typography>{message.text}</Typography>
+                {message.imageUrl && (
+                  <img
+                    src={message.imageUrl}
+                    alt="uploaded"
+                    style={{
+                      maxWidth: "300px",
+                      maxHeight: "300px",
+                      width: "100%",
+                      cursor: "pointer",
+                      marginTop: 5,
+                    }}
+                    onClick={() => setZoomedImage(message.imageUrl)}
+                  />
+                )}
+                {message.audioUrl && (
+                  <audio controls>
+                    <source src={message.audioUrl} type="audio/wav" />
+                  </audio>
+                )}
+              </Paper>
+            </ListItem>
+          ))}
+          <div ref={messagesEndRef} />
+        </List>
+      </Box>
+
+      {/* Message Input */}
+      <Box
+        component="form"
+        onSubmit={sendMessage}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          padding: 2,
+          background: "#f1f1f1",
+          position: "fixed",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 100,
+          borderTop: "2px solid #6a11cb",
+        }}
+      >
+        <Button
+          component="label"
+          variant="contained"
+          sx={{
+            background: "#6a11cb",
+            color: "white",
+            "&:hover": {
+              background: "#4a0f9a",
+            },
+            marginRight: 1,
+          }}
+        >
+          <Image />
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => setSelectedImage(e.target.files[0])}
+          />
+        </Button>
+        <TextField
+          variant="outlined"
+          fullWidth
+          placeholder="Type a message"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderColor: "#6a11cb",
+              "&:hover fieldset": {
+                borderColor: "#6a11cb",
+              },
+              "&.Mui-focused fieldset": {
+                borderColor: "#6a11cb",
+              },
+            },
+            "& .MuiInputBase-input": {
+              color: "black",
+            },
+            marginRight: 1,
+          }}
+        />
+        <Button
+          onClick={() => setShowEmojiPicker((prev) => !prev)}
+          variant="contained"
+          sx={{
+            background: "#6a11cb",
+            color: "white",
+            "&:hover": {
+              background: "#4a0f9a",
+            },
+            marginRight: 1,
+          }}
+        >
+          <EmojiEmotions />
+        </Button>
+        <Button
+          onClick={isRecording ? stopRecording : startRecording}
+          variant="contained"
+          sx={{
+            background: "#6a11cb",
+            color: "white",
+            "&:hover": {
+              background: "#4a0f9a",
+            },
+            marginRight: 1,
+          }}
+        >
+          {isRecording ? <Stop /> : <Mic />}
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{
+            background: "#6a11cb",
+            color: "white",
+            "&:hover": {
+              background: "#4a0f9a",
+            },
+          }}
+        >
+          <Send />
+        </Button>
+      </Box>
 
       {showEmojiPicker && (
-        <div className="emoji-picker-modal">
-          <button
-            className="close-emoji-picker"
-            onClick={() => setShowEmojiPicker(false)}
-          >
-            X
-          </button>
-          <EmojiPicker
-            onEmojiClick={handleEmojiClick}
-            pickerStyle={{
-              width: "300px",
-              maxHeight: "300px", // sau orice valoare dorești pentru a limita înălțimea
-              overflowY: "auto",
-              // pentru a permite scroll în cazul în care este nevoie
-            }}
-          />
-        </div>
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 70,
+            left: 20,
+            zIndex: 10,
+            background: "white",
+            borderRadius: 2,
+            boxShadow: 3,
+          }}
+        >
+          <EmojiPicker onEmojiClick={handleEmojiClick} />
+        </Box>
       )}
 
-      <form className="form" onSubmit={sendMessage}>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setSelectedImage(e.target.files[0])}
-          style={{ display: "none" }}
-          id="imageUpload"
-        />
-        <label htmlFor="imageUpload" className="image-upload-label">
-          <i className="fa-solid fa-image"></i>
-        </label>
-
-        <div className="input-container">
-          <input
-            className="message-input"
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message"
+      {/* Image Zoom Dialog */}
+      <Dialog open={!!zoomedImage} onClose={() => setZoomedImage(null)}>
+        <DialogContent>
+          <img
+            src={zoomedImage}
+            alt="Zoomed"
+            style={{ maxWidth: "100%", maxHeight: "100%" }}
           />
-          <button
-            type="button"
-            onClick={() => setShowEmojiPicker((val) => !val)}
-            className="emoji-button"
-          >
-            <i className="fa-solid fa-icons"></i>
-          </button>
-        </div>
-
-        <div className="voice-controls">
-          {isRecording ? (
-            <button onClick={stopRecording} className="send-message">
-              <i className="fa-solid fa-stop"></i>
-            </button>
-          ) : (
-            <button onClick={startRecording} className="send-message">
-              <i className="fa-solid fa-microphone"></i>
-            </button>
-          )}
-        </div>
-        <button className="send-message" type="submit">
-          <i className="fa-solid fa-paper-plane"></i>
-        </button>
-      </form>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </Box>
   );
 }
 

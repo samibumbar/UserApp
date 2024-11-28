@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,6 +6,8 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
+import { CircularProgress, Box } from "@mui/material";
+import PropTypes from "prop-types";
 import Profile from "./components/profile";
 import AuthForm from "./components/auth-form";
 import Messages from "./components/messages";
@@ -23,70 +25,96 @@ function App() {
       setUser(currentUser);
       setLoading(false);
     });
-    return () => unsubscribe();
+
+    return () => unsubscribe(); // Cleanup subscription on unmount
   }, []);
 
   if (loading) {
-    return <div>Loading...</div>;
+    // Loading spinner while waiting for Firebase auth
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="100vh"
+        bgcolor="background.default"
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div className="container">
-      <Router basename="/UserApp">
+    <Router basename="/UserApp">
+      <Box
+        minHeight="100vh"
+        display="flex"
+        flexDirection="column"
+        bgcolor="background.default"
+        color="text.primary"
+      >
         <RouteWrapper user={user} />
-      </Router>
-    </div>
+      </Box>
+    </Router>
   );
 }
 
 function RouteWrapper({ user }) {
   const location = useLocation();
-
-  // Verificăm dacă suntem pe o pagină de mesaje individuale
   const isMessagesPage =
     location.pathname.includes("/messages/") &&
     location.pathname !== "/messages/conversation-list";
 
-  // Redirecționare automată după autentificare la pagina de conversații
+  const renderRoutes = () => (
+    <Routes>
+      <Route path="/" element={<AuthForm />} />
+      <Route
+        path="/profile"
+        element={user ? <Profile /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/messages/:conversationId"
+        element={user ? <Messages /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/messages/conversation-list"
+        element={user ? <ConversationList /> : <Navigate to="/" />}
+      />
+      <Route
+        path="/messages"
+        element={
+          user ? (
+            <Navigate to="/messages/conversation-list" replace />
+          ) : (
+            <Navigate to="/" />
+          )
+        }
+      />
+      <Route
+        path="/friends"
+        element={user ? <FriendsList /> : <Navigate to="/" />}
+      />
+    </Routes>
+  );
+
   if (user && location.pathname === "/") {
     return <Navigate to="/messages/conversation-list" replace />;
   }
 
   return (
-    <>
-      {user && !isMessagesPage && <Navbar />}{" "}
-      {/* Navbar doar pe paginile dorite */}
-      <Routes>
-        <Route path="/" element={<AuthForm />} />
-        <Route
-          path="/profile"
-          element={user ? <Profile /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/messages/:conversationId"
-          element={user ? <Messages /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/messages/conversation-list"
-          element={user ? <ConversationList /> : <Navigate to="/" />}
-        />
-        <Route
-          path="/messages"
-          element={
-            user ? (
-              <Navigate to="/messages/conversation-list" />
-            ) : (
-              <Navigate to="/" />
-            )
-          }
-        />
-        <Route
-          path="/friends"
-          element={user ? <FriendsList /> : <Navigate to="/" />}
-        />
-      </Routes>
-    </>
+    <Box>
+      {user && !isMessagesPage && <Navbar />}
+      {renderRoutes()}
+    </Box>
   );
 }
+
+// Add PropTypes for validation
+RouteWrapper.propTypes = {
+  user: PropTypes.oneOfType([
+    PropTypes.object, // Firebase User object
+    PropTypes.oneOf([null]), // null for unauthenticated users
+  ]),
+};
 
 export default App;
