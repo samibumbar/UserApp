@@ -84,9 +84,9 @@ audio {
   overflow-y: auto;
 }
 
-/* Bara de căutare */
+
 .search-bar {
-  width: 100%; /* Asigură că inputul ocupă întreaga lățime */
+  width: 100%; 
 
   box-sizing: border-box;
 }
