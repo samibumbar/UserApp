@@ -19,7 +19,7 @@ import {
   DialogActions,
   IconButton,
 } from "@mui/material";
-import { Chat, Person, Delete } from "@mui/icons-material"; // Icons
+import { Chat, Person, Delete } from "@mui/icons-material";
 import {
   collection,
   getDocs,
@@ -36,8 +36,8 @@ import { useNavigate } from "react-router-dom";
 function FriendsList() {
   const [friends, setFriends] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFriend, setSelectedFriend] = useState(null); // To view friend's profile
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
+  const [selectedFriend, setSelectedFriend] = useState(null); 
+  const [deleteConfirm, setDeleteConfirm] = useState(null); 
   const [loading, setLoading] = useState(false);
   const currentUser = auth.currentUser;
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ function FriendsList() {
         background: "linear-gradient(135deg, #6a11cb, #2575fc)",
       }}
     >
-      {/* AppBar */}
+  
       <AppBar position="sticky" sx={{ background: "#6a11cb" }}>
         <Toolbar>
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold" }}>
@@ -136,7 +136,6 @@ function FriendsList() {
         </Toolbar>
       </AppBar>
 
-      {/* Search Bar */}
       <Box sx={{ padding: 2 }}>
         <TextField
           variant="outlined"
@@ -165,7 +164,7 @@ function FriendsList() {
         />
       </Box>
 
-      {/* Friends List */}
+    
       <Box
         sx={{
           flexGrow: 1,
@@ -230,7 +229,6 @@ function FriendsList() {
         )}
       </Box>
 
-      {/* Profile Dialog */}
       <Dialog open={!!selectedFriend} onClose={handleCloseProfile}>
         <DialogTitle>{selectedFriend?.name}</DialogTitle>
         <DialogContent>
@@ -244,7 +242,7 @@ function FriendsList() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+     
       <Dialog open={!!deleteConfirm} onClose={handleDeleteCancel}>
         <DialogTitle>Are you sure you want to delete this friend?</DialogTitle>
         <DialogActions>
