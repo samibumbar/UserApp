@@ -1,17 +1,17 @@
-// src/theme.js
+
 import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   palette: {
     background: {
-      default: "linear-gradient(to right, #6a11cb, #2575fc)", // Fundal gradient
+      default: "linear-gradient(to right, #6a11cb, #2575fc)", 
     },
     text: {
-      primary: "#ffffff", // Text alb implicit
+      primary: "#ffffff", 
     },
   },
   typography: {
-    fontFamily: "'Roboto', sans-serif", // Font global
+    fontFamily: "'Roboto', sans-serif", 
   },
 });
 
