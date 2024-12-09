@@ -32,23 +32,23 @@
   padding: 0.2rem 0.5rem;
 }
 .log-btn {
-  font-size: 0.8rem; /* Dimensiunea textului */
-  padding: 10px 20px; /* Spațiere internă (padding) pentru un aspect confortabil */
-  background-color: #ff4d4d; /* Culoarea de fundal a butonului */
-  color: white; /* Culoarea textului */
-  border: none; /* Elimină bordura implicită */
-  border-radius: 5px; /* Colțuri rotunjite */
-  cursor: pointer; /* Cursorul se schimbă la hover */
-  transition: background-color 0.3s ease; /* Tranziție pentru efectele hover */
+  font-size: 0.8rem; 
+  padding: 10px 20px; 
+  background-color: #ff4d4d; 
+  color: white;
+  border: none; 
+  border-radius: 5px;
+  cursor: pointer; 
+  transition: background-color 0.3s ease; 
 }
 
 .log-btn:hover {
-  background-color: #ff1a1a; /* Culoarea de fundal când se trece cu mouse-ul peste buton */
+  background-color: #ff1a1a; 
 }
 
 .log-btn:active {
-  background-color: #cc0000; /* Culoarea de fundal când butonul este apăsat */
-  transform: scale(0.98); /* Efect de micșorare la click */
+  background-color: #cc0000; 
+  transform: scale(0.98); 
 }
 .resset-pasword-container {
   display: flex;
