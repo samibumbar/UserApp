@@ -26,11 +26,11 @@ function App() {
       setLoading(false);
     });
 
-    return () => unsubscribe(); // Cleanup subscription on unmount
+    return () => unsubscribe(); 
   }, []);
 
   if (loading) {
-    // Loading spinner while waiting for Firebase auth
+   
     return (
       <Box
         display="flex"
@@ -109,11 +109,11 @@ function RouteWrapper({ user }) {
   );
 }
 
-// Add PropTypes for validation
+/
 RouteWrapper.propTypes = {
   user: PropTypes.oneOfType([
-    PropTypes.object, // Firebase User object
-    PropTypes.oneOf([null]), // null for unauthenticated users
+    PropTypes.object,
+    PropTypes.oneOf([null]), 
   ]),
 };
 
